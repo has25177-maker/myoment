@@ -5,8 +5,6 @@ import pandas as pd
 from datetime import date
 import requests
 
-</style>
-
 # ======================================
 # 1. 폰트 + 전역 스타일
 # ======================================
