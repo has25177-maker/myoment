@@ -245,25 +245,20 @@ def page_ai_diagnosis():
         for t in tips:
             st.write("- " + t)
 
+# ======================================
+# 응급상황 AI – OpenStreetMap 기반 병원 검색 (folium 없이)
+# ======================================
 
-# ======================================
-# 5. 응급상황 AI(지도 포함)
-# ======================================
 import requests
 import pandas as pd
-import folium
-from streamlit_folium import st_folium
-import streamlit as st
 
-# -------------------------------
-# 1) 주소 → 좌표 변환 (Nominatim)
-# -------------------------------
+# 1) 주소를 좌표로 변환
 def geocode_address(address: str):
     url = "https://nominatim.openstreetmap.org/search"
     params = {
         "q": address,
         "format": "json",
-        "limit": 1
+        "limit": 1,
     }
     res = requests.get(url, params=params, headers={"User-Agent": "myoment-app"})
     data = res.json()
@@ -276,15 +271,10 @@ def geocode_address(address: str):
     return lat, lon
 
 
-# ------------------------------------------
-# 2) OpenStreetMap Overpass API로 동물병원 검색
-# ------------------------------------------
+# 2) Overpass API로 근처 동물병원 검색
 def search_pet_hospitals(lat, lon, radius=3000):
-    """
-    반경 radius 미터 안의 동물병원 검색
-    """
     query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
       node["amenity"="veterinary"](around:{radius},{lat},{lon});
       way["amenity"="veterinary"](around:{radius},{lat},{lon});
@@ -293,123 +283,52 @@ def search_pet_hospitals(lat, lon, radius=3000):
     out center;
     """
 
-    url = "http://overpass-api.de/api/interpreter"
+    url = "https://overpass-api.de/api/interpreter"
     res = requests.post(url, data={"data": query})
     data = res.json()
 
     results = []
-    for element in data["elements"]:
-        if "lat" in element and "lon" in element:
-            name = element["tags"].get("name", "이름 없음")
+    for e in data["elements"]:
+        if "lat" in e and "lon" in e:
             results.append({
-                "이름": name,
-                "lat": element["lat"],
-                "lon": element["lon"]
+                "이름": e["tags"].get("name", "이름 없음"),
+                "lat": float(e["lat"]),
+                "lon": float(e["lon"]),
             })
 
     return pd.DataFrame(results)
 
 
-# -------------------------
-# 3) Streamlit 지도 페이지
-# -------------------------
+# 3) Streamlit 페이지
 def page_osm_map():
-    st.subheader("📍 근처 동물병원 찾기 (OpenStreetMap)")
+    st.title("📍 근처 동물병원 찾기 (OpenStreetMap)")
 
-    address = st.text_input("주소 또는 동네 입력 (예: 서울 강남구)")
+    address = st.text_input("주소 입력 (예: 서울 강남구)")
+
     if st.button("검색"):
-        if not address.strip():
+        if not address:
             st.warning("주소를 입력해 주세요.")
             return
 
-        st.write("⏳ 위치 확인 중…")
-
         lat, lon = geocode_address(address)
+
         if lat is None:
-            st.error("주소를 찾을 수 없어요.")
+            st.error("주소를 찾을 수 없습니다.")
             return
 
-        st.success(f"좌표: {lat}, {lon}")
-
+        # 병원 검색
         df = search_pet_hospitals(lat, lon)
 
-        # 지도 생성
-        m = folium.Map(location=[lat, lon], zoom_start=13)
+        if df.empty:
+            st.info("반경 3km 내 동물병원이 없습니다.")
+            return
 
-        # 중심 마커
-        folium.Marker(
-            [lat, lon],
-            tooltip="입력 위치",
-            icon=folium.Icon(color="blue")
-        ).add_to(m)
+        # 지도 표시
+        st.map(df[["lat", "lon"]])
 
-        # 동물병원 마커
-        for idx, row in df.iterrows():
-            folium.Marker(
-                [row["lat"], row["lon"]],
-                tooltip=row["이름"],
-                icon=folium.Icon(color="red")
-            ).add_to(m)
-
-        st_folium(m, width=700)
-
-        st.markdown("### 📋 검색된 동물병원 목록")
+        # 표 표시
+        st.subheader("📋 병원 목록")
         st.dataframe(df, use_container_width=True)
-
-
-    # 2) 주변 동물병원 검색
-    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-    params = {"query": "동물병원", "x": x, "y": y, "radius": 5000, "size": 10}
-    res = requests.get(url, headers=headers, params=params)
-
-    places = res.json().get("documents", [])
-    if not places:
-        st.info("근처에 동물병원이 없습니다.")
-        return None, None
-
-    map_df = pd.DataFrame(
-        [{"lat": float(p["y"]), "lon": float(p["x"])} for p in places]
-    )
-    table_df = pd.DataFrame(
-        [
-            {
-                "이름": p["place_name"],
-                "주소": p["road_address_name"] or p["address_name"],
-                "전화": p.get("phone", "")
-            }
-            for p in places
-        ]
-    )
-
-    return map_df, table_df
-
-
-def page_ai_emergency():
-    st.title("† 응급상황 AI")
-
-    st.subheader("♧ 근처 동물병원 찾기")
-    region = st.text_input("주소 입력 (예: 서울 강남구)")
-    if st.button("검색"):
-        m, t = search_animal_hospitals_kakao(region)
-        if m is not None:
-            st.map(m)
-            st.dataframe(t, use_container_width=True)
-
-    st.markdown("---")
-    mode = st.selectbox(
-        "상황 선택",
-        ["선택", "건강 응급", "심폐소생술", "화재/지진", "고양이 실종"]
-    )
-
-    if mode == "건강 응급":
-        st.write("- 반복 구토: 사료/물 잠시 치우고 기록")
-        st.write("- 호흡 곤란: 즉시 병원 이동")
-    elif mode == "심폐소생술":
-        st.write("- 의식 확인 → 호흡·맥박 없으면 흉부 압박 시작")
-    elif mode == "화재/지진":
-        st.write("- 이동장 바로 사용하도록 훈련")
-    elif mode == "고양이 실종":
-        st.write("- 50m 반경 조용히 탐색 / 숨을 만한 곳 집중 검색")
 
 
 # ======================================
