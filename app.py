@@ -18,7 +18,7 @@ KAKAO_REST_API_KEY = "여기에_카카오_REST_API_키_입력"  # ← 직접 수
 # ======================================
 font_css = ""
 try:
-    with open('온글잎 박다현체.woff2", "rb") as f:
+    with open('BakDahyn.woff2", "rb") as f:
         font_bytes = f.read()
     font_b64 = base64.b64encode(font_bytes).decode()
     font_css = f"""
