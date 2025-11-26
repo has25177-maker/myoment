@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
+import base64
 
 # ======================================
 # 기본 설정
@@ -8,78 +9,118 @@ from datetime import date
 st.set_page_config(page_title="묘멘트", page_icon="🐱", layout="wide")
 
 # ======================================
-# 전역 스타일 (폰트 + 배경 + 버튼 컬러)
+# 폰트 파일(base64) 로딩 (ChosunSg.TTF)
 # ======================================
-st.markdown(
+font_css = ""
+try:
+    with open("ChosunSg.TTF", "rb") as f:
+        font_bytes = f.read()
+    font_b64 = base64.b64encode(font_bytes).decode()
+    font_css = f"""
+    @font-face {{
+        font-family: 'ChosunSg';
+        src: url(data:font/ttf;base64,{font_b64}) format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }}
+    html, body, [class*="css"] {{
+        font-family: 'ChosunSg', sans-serif !important;
+    }}
     """
+except Exception:
+    # 폰트 파일 못 찾으면 기본 폰트 사용
+    font_css = """
+    html, body, [class*="css"] {
+        font-family: sans-serif;
+    }
+    """
+
+# ======================================
+# 전역 스타일 (배경 + 버튼 + 입력창 + 라디오 색 등)
+# ======================================
+GLOBAL_STYLE = f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap');
+{font_css}
 
-/* 전체 앱 폰트 */
-html, body, [class*="css"] {
-    font-family: 'Gowun Dodum', sans-serif !important;
-}
-
-/* 앱 전체 배경색 */
-[data-testid="stAppViewContainer"] > .main {
-    background-color: #FEF7EB !important;  /* 배경 #FEF7EB */
-}
+/* 전체 배경색 */
+body, .main, [data-testid="stAppViewContainer"], 
+[data-testid="stAppViewContainer"] > .main, 
+.block-container {{
+    background-color: #FEF7EB !important;
+}}
 
 /* 사이드바 배경색 */
-[data-testid="stSidebar"] {
+[data-testid="stSidebar"] {{
     background-color: #F3E8DD !important;
-}
+}}
 
-/* 라디오/체크박스 등 라벨 컬러 */
-label {
-    color: #4A372B !important;
-}
+/* 제목 색 */
+h1, h2, h3, h4, h5 {{
+    color: #4A332D !important;
+}}
+
+/* 일반 텍스트 색 */
+p, li, span, label {{
+    color: #4A332D !important;
+}}
 
 /* 버튼 스타일 */
-.stButton > button {
-    background-color: #E6B79F !important;
-    color: #4A372B !important;
+.stButton > button {{
+    background-color: #E6B59D !important;
+    color: #4A332D !important;
     border-radius: 10px;
     border: none;
     padding: 0.5rem 1.2rem;
     font-size: 1rem;
-}
-.stButton > button:hover {
+}}
+.stButton > button:hover {{
     background-color: #D8C4B6 !important;
     color: #3A2920 !important;
-}
+}}
 
-/* 텍스트 입력창, 셀렉트박스 배경 살짝 톤 맞추기 */
-input, textarea {
-    background-color: #FAF3E8 !important;
-    color: #4A372B !important;
-}
-div[data-baseweb="select"] > div {
-    background-color: #FAF3E8 !important;
-}
+/* 입력창, 셀렉트박스 배경 */
+input, textarea {{
+    background-color: #FEF7EB !important;
+    color: #4A332D !important;
+    border-radius: 8px !important;
+}}
+div[data-baseweb="select"] > div {{
+    background-color: #FEF7EB !important;
+    border-radius: 8px !important;
+}}
 
-/* 데이터프레임 등 카드형 박스 테두리 살짝 둥글게 */
-.css-1aumxhk, .css-1dp5vir, .css-12ttj6m {
+/* 라디오/체크박스 선택 색 (accent-color) */
+input[type="radio"], input[type="checkbox"] {{
+    accent-color: #E6B59D !important;
+}}
+
+/* 데이터프레임 카드 둥글게 (버전마다 클래스가 달라서 넓게 지정) */
+[data-testid="stDataFrame"] {{
     border-radius: 10px !important;
-}
+}}
 
-/* 제목 컬러 */
-h1, h2, h3, h4, h5 {
-    color: #4A372B !important;
-}
+/* 사이드바 라디오 라벨 여백 */
+section[data-testid="stSidebar"] label {{
+    font-size: 0.95rem;
+}}
+
+/* 스크롤 막대도 살짝 톤 맞추기 (지원 브라우저에서만) */
+::-webkit-scrollbar-thumb {{
+    background-color: #E6B59D !important;
+    border-radius: 10px;
+}}
 </style>
-""",
-    unsafe_allow_html=True,
-)
+"""
+
+st.markdown(GLOBAL_STYLE, unsafe_allow_html=True)
 
 # ======================================
 # 세션 상태 초기화
 # ======================================
 if "records" not in st.session_state:
-    st.session_state.records = []  # 건강 기록
+    st.session_state.records = []
 
 if "food_db" not in st.session_state:
-    # 음식 사전
     st.session_state.food_db = {
         "닭가슴살": {"가능": "소량 삶아서 가능", "주의": "양념·소금 없이 주세요."},
         "소고기": {"가능": "기름 적은 부위를 잘 익혀 소량 가능", "주의": "양념, 기름 많은 부위는 피하기."},
@@ -97,12 +138,11 @@ if "food_db" not in st.session_state:
         "포도": {"가능": "불가", "주의": "원인 불명 신장 손상 가능성. 완전 금지."},
         "건포도": {"가능": "불가", "주의": "포도와 동일하게 신장 손상 위험."},
         "커피": {"가능": "불가", "주의": "카페인 독성. 사람 기준 소량도 고양이에겐 위험."},
-        "알코올": {"가능": "불가", "주의": "극소량도 중독·저체온 위험, 절대 금지."},
+        "알코올": {"가능": "불가", "주의": "작은 양도 위험. 절대 금지."},
     }
 
-# ======================================
+
 # 공통 유틸
-# ======================================
 def add_record(rec: dict):
     st.session_state.records.append(rec)
 
@@ -114,10 +154,10 @@ def get_records_df():
 
 
 # ======================================
-# 1. 건강 기록 페이지
+# 1. 건강 기록
 # ======================================
 def page_health_log():
-    st.title("📒 건강 기록")
+    st.title("📁 건강 기록")
 
     col1, col2 = st.columns(2)
 
@@ -173,14 +213,14 @@ def page_health_log():
         vomit_color = ""
         vomit_type = ""
         if "구토" in symptoms:
-            st.markdown("#### 🤮 구토 상세")
+            st.markdown("#### 🤮 구토 상세 기록")
             vomit_color = st.selectbox(
                 "구토 색",
-                ["투명/거품", "노란색(담즙)", "갈색/사료", "붉은색/분홍색", "기타"],
+                ["선택 안 함", "투명/거품", "노란색(담즙)", "갈색/사료", "붉은색/분홍색", "기타"],
             )
             vomit_type = st.selectbox(
                 "구토 내용물",
-                ["헤어볼", "사료 조각", "거품/액체", "이물 가능성", "기타"],
+                ["선택 안 함", "헤어볼", "사료 조각", "거품/액체", "이물 가능성", "기타"],
             )
 
         memo = st.text_area("📝 특이사항 메모", placeholder="환경 변화, 간식, 약 복용 등")
@@ -211,7 +251,7 @@ def page_health_log():
 
 
 # ======================================
-# 2. AI 진단 페이지
+# 2. AI 진단
 # ======================================
 def page_ai_diagnosis():
     st.title("📊 AI 진단")
@@ -229,7 +269,7 @@ def page_ai_diagnosis():
     low_meal = recent["식사량"].isin(["거의 안 먹음", "적게"]).sum()
     if low_meal >= 2:
         warnings.append("최근 며칠 간 식사량이 줄어든 날이 여러 번 있습니다.")
-        tips.append("식욕 저하는 다양한 질환의 초기가 될 수 있어 24시간 이상 지속 시 병원 상담이 필요해요.")
+        tips.append("식욕 저하는 다양한 질환의 초기가 될 수 있으니 24시간 이상 지속 시 병원 상담을 권장합니다.")
 
     # 음수량
     low_water = recent["음수량"].isin(["거의 안 마심", "적게"]).sum()
@@ -241,13 +281,13 @@ def page_ai_diagnosis():
     bad_poop = recent["배변"].isin(["설사", "혈변", "안 봄"]).sum()
     if bad_poop >= 2:
         warnings.append("배변 상태 이상(설사/혈변/배변 없음)이 여러 번 기록되었습니다.")
-        tips.append("3일 이상 지속되면 변 상태를 사진으로 남겨 병원 진료를 받는 것이 안전합니다.")
+        tips.append("3일 이상 지속되면 변 상태 사진과 함께 병원 진료를 받는 것이 안전합니다.")
 
     # 행동
     if "행동" in recent.columns:
         low_act = recent["행동"].str.contains("활동 감소|잠이 많아짐|숨는 시간이 늘어남", na=False).sum()
         if low_act >= 2:
-            warnings.append("무기력하거나 숨어 지내는 패턴이 반복되고 있어요.")
+            warnings.append("무기력하거나 숨어 지내는 패턴이 반복되고 있습니다.")
             tips.append("활동 감소 + 식욕 저하가 함께 보이면 더 주의가 필요합니다.")
 
     # 구토
@@ -255,11 +295,12 @@ def page_ai_diagnosis():
         vomit_days = recent["이상증세"].str.contains("구토", na=False).sum()
         if vomit_days >= 2:
             warnings.append("일주일 안에 ‘구토’가 여러 번 기록되었습니다.")
-            tips.append("헤어볼, 사료, 장 문제 등 원인이 다양하니 토한 내용물과 횟수를 기록해 두면 좋아요.")
-        if "구토 색" in recent.columns:
-            blood_like = recent["구토 색"].str.contains("붉은색|분홍", na=False).sum()
-            if blood_like >= 1:
-                warnings.append("붉은색·분홍색 구토가 기록되었습니다. 혈성 구토 가능성이 있어 즉시 병원 진료가 필요할 수 있어요.")
+            tips.append("헤어볼, 사료, 장 문제 등 원인이 다양하니 토한 내용물과 횟수를 기록해 두면 도움이 됩니다.")
+
+    if "구토 색" in recent.columns:
+        blood_like = recent["구토 색"].str.contains("붉은색|분홍", na=False).sum()
+        if blood_like >= 1:
+            warnings.append("붉은색·분홍색 구토가 기록되었습니다. 혈성 구토 가능성이 있어 즉시 병원 진료가 필요할 수 있습니다.")
 
     if not warnings:
         st.success("최근 기록에서 뚜렷한 위험 신호는 크게 보이지 않습니다.")
@@ -279,7 +320,7 @@ def page_ai_diagnosis():
 
 
 # ======================================
-# 3. 집사 가이드 페이지
+# 3. 집사 가이드
 # ======================================
 def page_guide():
     st.title("📚 집사 가이드")
@@ -300,25 +341,25 @@ def page_guide():
 
     with tabs[0]:
         st.write("- 숨을 수 있는 안전한 공간을 먼저 마련해 주세요.")
-        st.write("- 밥·물·화장실 위치를 자주 바꾸지 않는 것이 안정감에 도움이 됩니다.")
-        st.write("- 화장실과 밥그릇은 너무 가깝지 않게 배치해 주세요.")
-        st.write("- 갑작스러운 큰 소음·손님 방문·이사 등 환경 변화는 스트레스를 유발할 수 있습니다.")
+        st.write("- 밥·물·화장실 위치를 자주 바꾸지 않는 것이 좋습니다.")
+        st.write("- 화장실과 밥그릇은 서로 너무 가깝지 않게 배치해 주세요.")
+        st.write("- 갑작스러운 소음·손님 방문·이사 등은 큰 스트레스를 줄 수 있습니다.")
 
     with tabs[1]:
         st.subheader("💊 약 먹이기")
-        st.write("- 가능하면 약 먹이기 보조 간식(필 포켓 등)을 활용하세요.")
-        st.write("- 알약은 혀 뒤쪽에 두고 입을 닫은 뒤 살짝 목을 쓰다듬으며 삼키는지 확인합니다.")
-        st.write("- 가루약은 좋아하는 습식에 아주 소량 섞어 반응을 보며 양을 조절해 주세요.")
+        st.write("- 가능하면 약 먹이기 보조 간식(필 포켓 등)을 활용해 주세요.")
+        st.write("- 알약은 혀 뒤쪽에 두고 입을 닫은 뒤 목을 살짝 쓰다듬으며 삼키는지 확인합니다.")
+        st.write("- 가루약은 좋아하는 습식에 아주 소량 섞어 반응을 보며 양을 조절합니다.")
 
     with tabs[2]:
         st.subheader("🚪 격리·적응")
         st.write("- 새 고양이를 들일 때는 최소 며칠간 방을 나누어 냄새와 소리에 먼저 적응시킵니다.")
-        st.write("- 문틈으로 냄새만 먼저 공유하고, 짧은 시간씩 대면을 시도하며 점차 늘려갑니다.")
+        st.write("- 문틈으로 냄새만 공유하고, 짧은 시간씩 대면을 시도하며 점차 늘려갑니다.")
 
     with tabs[3]:
         st.subheader("🛁 목욕")
         st.write("- 필요할 때만 짧게 하고, 미끄럽지 않은 환경에서 진행해 주세요.")
-        st.write("- 고양이 전용 샴푸를 사용하고, 완전히 말리지 않으면 감기·피부 문제가 생길 수 있습니다.")
+        st.write("- 고양이 전용 샴푸를 사용하고, 충분히 말리지 않으면 감기·피부 문제가 생길 수 있습니다.")
 
     with tabs[4]:
         st.subheader("💅 발톱 관리")
@@ -343,13 +384,13 @@ def page_guide():
 
     with tabs[8]:
         st.subheader("🩺 대표 질병 징후")
-        st.write("- 방광염/요로계: 화장실을 자주 들락거리거나, 소변 양이 적고 혈뇨가 보일 수 있습니다.")
+        st.write("- 방광염/요로계: 화장실을 자주 들락거리거나 소변 양이 줄고 혈뇨가 보일 수 있습니다.")
         st.write("- 장 문제: 지속적인 설사·구토·식욕 저하·체중 감소 등이 동반됩니다.")
         st.write("- 구강 문제: 입 냄새, 침 흘림, 딱딱한 사료를 씹기 어려워하는 모습이 보일 수 있습니다.")
 
 
 # ======================================
-# 4. 응급상황 AI 페이지
+# 4. 응급상황 AI
 # ======================================
 def page_ai_emergency():
     st.title("🚨 응급상황 AI")
@@ -373,7 +414,7 @@ def page_ai_emergency():
                 st.write("- 사람용 지사제는 사용하지 마세요.")
                 st.write("- 변의 색·모양·횟수를 기록하고 사진을 남겨 두면 진료에 도움이 됩니다.")
             elif sym == "호흡 곤란":
-                st.error("입을 벌리고 헐떡이거나, 혀·잇몸이 파랗게 보이면 **매우 위급한 상황**입니다. 즉시 응급 병원으로 이동해야 합니다.")
+                st.error("입을 벌리고 헐떡이거나 혀·잇몸이 파랗게 보이면 **매우 위급한 상황**입니다. 즉시 응급 병원으로 이동해야 합니다.")
             elif sym == "갑작스러운 무기력":
                 st.write("- 체온(너무 뜨겁거나 차갑지 않은지), 호흡 수, 잇몸 색을 확인해 주세요.")
                 st.write("- 먹지도, 움직이지도 않으면 바로 병원 상담이 필요합니다.")
@@ -403,7 +444,7 @@ def page_ai_emergency():
 
 
 # ======================================
-# 5. 음식 사전 페이지
+# 5. 음식 사전
 # ======================================
 def page_food_dict():
     st.title("🍙 음식 사전")
@@ -445,7 +486,7 @@ def page_food_dict():
 
 
 # ======================================
-# 6. 마켓 페이지
+# 6. 마켓
 # ======================================
 def page_market():
     st.title("🛍️ 묘멘트 마켓")
@@ -472,7 +513,7 @@ def page_market():
     if state == "장 건강 민감":
         st.write("- 소화가 잘 되는 저자극 사료")
         st.write("- 유산균이 포함된 사료/간식")
-        st.write("- 갑작스러운 사료 변경은 피하고, 서서히 바꾸기")
+        st.write("- 갑작스러운 사료 변경은 피하고 서서히 바꾸기")
     elif state == "수분 섭취 부족":
         st.write("- 수분 함량이 높은 습식 사료")
         st.write("- 물 섭취를 유도하는 국물·츄르 형태 간식")
@@ -496,13 +537,11 @@ menu = st.sidebar.radio(
 )
 
 if menu == "홈":
-    # 배너 이미지만 깔끔하게 표시 (banner.png가 레포 최상단에 있어야 함)
     try:
         st.image("banner.png", use_column_width=True)
     except Exception:
         st.title("🐱 묘멘트")
         st.write("배너 이미지를 불러올 수 없어요. `banner.png` 파일 위치를 확인해 주세요.")
-
 elif menu == "건강 기록":
     page_health_log()
 elif menu == "AI 진단":
