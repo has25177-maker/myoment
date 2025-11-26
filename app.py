@@ -2,9 +2,6 @@ import streamlit as st
 import base64
 import os
 
-# -------------------------------
-#  폰트 base64 인코딩
-# -------------------------------
 def load_font_base64(font_path):
     with open(font_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
@@ -12,9 +9,6 @@ def load_font_base64(font_path):
 FONT_PATH = os.path.join(os.path.dirname(__file__), "Ownglyph_PDH-Rg.woff2")
 font_base64 = load_font_base64(FONT_PATH)
 
-# -------------------------------
-#  기본 스타일
-# -------------------------------
 CUSTOM_STYLE = f"""
 <style>
 
@@ -25,7 +19,20 @@ CUSTOM_STYLE = f"""
     font-style: normal;
 }}
 
-html, body, [class*="css"] {{
+/* -------------------------------
+   Streamlit 전체 자동 스타일 적용
+-------------------------------- */
+
+html, body, [class^="st-"], [class*=" st-"], div, span, label, p, h1, h2, h3, h4, h5, h6 {{
+    font-family: 'MyoFont', sans-serif !important;
+}}
+
+/* 입력창 내부 placeholder까지 적용 */
+input, textarea, select {{
+    font-family: 'MyoFont', sans-serif !important;
+}}
+
+button, .stButton > button {{
     font-family: 'MyoFont', sans-serif !important;
 }}
 
