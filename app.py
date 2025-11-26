@@ -5,14 +5,17 @@ import pandas as pd
 from datetime import date
 import requests
 
-# ======================================
-# 0. 설정 & 카카오 API 키
-# ======================================
-st.set_page_config(page_title="묘멘트", page_icon="♧", layout="wide")
+<style>
+/* 사이드바 토글 버튼( > , < ) 완전히 숨기기 */
+button[kind="header"] {
+    display: none !important;
+}
 
-# 🔑 카카오 REST API 키 (직접 넣어야 지도 기능 작동)
-KAKAO_REST_API_KEY = "여기에_카카오_REST_API_키_입력"
-
+/* 아이콘 자체도 숨기기 (keyboard_double_arrow_right 방지) */
+svg[data-testid="stActionButtonIcon"] {
+    display: none !important;
+}
+</style>
 
 # ======================================
 # 1. 폰트 + 전역 스타일
@@ -258,24 +261,113 @@ def page_ai_diagnosis():
 # ======================================
 # 5. 응급상황 AI(지도 포함)
 # ======================================
-def search_animal_hospitals_kakao(keyword_region):
-    if not KAKAO_REST_API_KEY or "여기에" in KAKAO_REST_API_KEY:
-        st.error("카카오 REST API KEY를 입력해 주세요!")
+import requests
+import pandas as pd
+import folium
+from streamlit_folium import st_folium
+import streamlit as st
+
+# -------------------------------
+# 1) 주소 → 좌표 변환 (Nominatim)
+# -------------------------------
+def geocode_address(address: str):
+    url = "https://nominatim.openstreetmap.org/search"
+    params = {
+        "q": address,
+        "format": "json",
+        "limit": 1
+    }
+    res = requests.get(url, params=params, headers={"User-Agent": "myoment-app"})
+    data = res.json()
+
+    if not data:
         return None, None
 
-    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
+    lat = float(data[0]["lat"])
+    lon = float(data[0]["lon"])
+    return lat, lon
 
-    # 1) 주소 → 좌표 변환
-    addr_url = "https://dapi.kakao.com/v2/local/search/address.json"
-    addr_res = requests.get(addr_url, headers=headers, params={"query": keyword_region})
 
-    docs = addr_res.json().get("documents", [])
-    if not docs:
-        st.warning("주소를 찾을 수 없습니다.")
-        return None, None
+# ------------------------------------------
+# 2) OpenStreetMap Overpass API로 동물병원 검색
+# ------------------------------------------
+def search_pet_hospitals(lat, lon, radius=3000):
+    """
+    반경 radius 미터 안의 동물병원 검색
+    """
+    query = f"""
+    [out:json][timeout:25];
+    (
+      node["amenity"="veterinary"](around:{radius},{lat},{lon});
+      way["amenity"="veterinary"](around:{radius},{lat},{lon});
+      relation["amenity"="veterinary"](around:{radius},{lat},{lon});
+    );
+    out center;
+    """
 
-    x = float(docs[0]["x"])
-    y = float(docs[0]["y"])
+    url = "http://overpass-api.de/api/interpreter"
+    res = requests.post(url, data={"data": query})
+    data = res.json()
+
+    results = []
+    for element in data["elements"]:
+        if "lat" in element and "lon" in element:
+            name = element["tags"].get("name", "이름 없음")
+            results.append({
+                "이름": name,
+                "lat": element["lat"],
+                "lon": element["lon"]
+            })
+
+    return pd.DataFrame(results)
+
+
+# -------------------------
+# 3) Streamlit 지도 페이지
+# -------------------------
+def page_osm_map():
+    st.subheader("📍 근처 동물병원 찾기 (OpenStreetMap)")
+
+    address = st.text_input("주소 또는 동네 입력 (예: 서울 강남구)")
+    if st.button("검색"):
+        if not address.strip():
+            st.warning("주소를 입력해 주세요.")
+            return
+
+        st.write("⏳ 위치 확인 중…")
+
+        lat, lon = geocode_address(address)
+        if lat is None:
+            st.error("주소를 찾을 수 없어요.")
+            return
+
+        st.success(f"좌표: {lat}, {lon}")
+
+        df = search_pet_hospitals(lat, lon)
+
+        # 지도 생성
+        m = folium.Map(location=[lat, lon], zoom_start=13)
+
+        # 중심 마커
+        folium.Marker(
+            [lat, lon],
+            tooltip="입력 위치",
+            icon=folium.Icon(color="blue")
+        ).add_to(m)
+
+        # 동물병원 마커
+        for idx, row in df.iterrows():
+            folium.Marker(
+                [row["lat"], row["lon"]],
+                tooltip=row["이름"],
+                icon=folium.Icon(color="red")
+            ).add_to(m)
+
+        st_folium(m, width=700)
+
+        st.markdown("### 📋 검색된 동물병원 목록")
+        st.dataframe(df, use_container_width=True)
+
 
     # 2) 주변 동물병원 검색
     url = "https://dapi.kakao.com/v2/local/search/keyword.json"
@@ -343,32 +435,46 @@ def page_guide():
     ])
 
     with tabs[0]:
-        st.write("- 안전한 공간 준비")
-        st.write("- 밥/물/화장실 위치 일관성 유지")
+        st.write("- 안전한 숨숨 집 제공")
+        st.write("- 밥/물/화장실 위치는 자주 바꾸지 않기")
+        st.write("- 스트레스 요인(소음/손님) 최소화")
 
     with tabs[1]:
-        st.write("- 약 먹이기 팁 정리")
+        st.write("- 알약은 혀 뒤쪽에 두고 턱을 살짝 받쳐 삼키도록 유도")
+        st.write("- 필 포켓 같은 보조 간식 사용 추천")
+        st.write("- 가루약은 습식+아주 소량부터 섞기")
 
     with tabs[2]:
-        st.write("- 새 고양이 적응 방법")
+        st.write("- 새로운 고양이 도입 시 최소 며칠 생활 공간 분리")
+        st.write("- 문틈 냄새 공유 → 짧은 대면 → 점진적 적응")
 
     with tabs[3]:
-        st.write("- 고양이 목욕 요령")
+        st.write("- 미끄럽지 않은 욕조 매트 사용")
+        st.write("- 고양이 전용 샴푸 사용, 물 온도는 미지근하게")
+        st.write("- 완전히 말려주지 않으면 감기 위험")
 
     with tabs[4]:
-        st.write("- 발톱 자르는 법")
+        st.write("- 처음엔 한두 발가락만 가볍게 연습")
+        st.write("- 분홍색 혈관 부분 피해서 투명 끝만 자르기")
 
     with tabs[5]:
-        st.write("- 노령묘 케어 팁")
+        st.write("- 활동량/식사량/점프력 감소는 초기 징후일 수 있음")
+        st.write("- 정기 검진 추천(6개월~1년)")
 
     with tabs[6]:
-        st.write("- 수술 이후 주의사항")
+        st.write("- 넥카라 착용 유지")
+        st.write("- 수술 부위 붉음/부종/분비물 → 병원 상담")
+        st.write("- 중성화 후 살찌기 쉬워 사료 조절 필요")
 
     with tabs[7]:
-        st.write("- 체중 관리")
+        st.write("- 저칼로리/다이어트 사료 활용")
+        st.write("- 하루 2~3회 소분 급여")
+        st.write("- 갑작스러운 사료 변경 금지")
 
     with tabs[8]:
-        st.write("- 질병 징후 정리")
+        st.write("- 방광염: 화장실을 자주 들락날락/혈뇨 가능")
+        st.write("- 장 문제: 설사·구토·체중 감소")
+        st.write("- 구강 문제: 침 흘림, 입 냄새, 사료 씹기 어려움")
 
 
 # ======================================
