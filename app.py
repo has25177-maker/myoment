@@ -1,3 +1,48 @@
+import os
+import streamlit as st
+
+# -------------------------------
+# 1) 폰트 파일 절대경로 안전 생성
+# -------------------------------
+FONT_PATH = os.path.join(os.path.dirname(__file__), "BakDahyun.woff2")
+
+# -------------------------------
+# 2) 커스텀 폰트 로딩
+# -------------------------------
+def load_custom_font():
+    if not os.path.exists(FONT_PATH):
+        st.write("⚠ 폰트 파일을 찾을 수 없습니다:", FONT_PATH)
+        return
+
+    # woff2는 base64 인코딩해야 CSS에서 사용 가능
+    import base64
+    with open(FONT_PATH, "rb") as f:
+        font_bytes = f.read()
+        encoded = base64.b64encode(font_bytes).decode()
+
+    font_css = f"""
+    <style>
+    @font-face {{
+        font-family: 'MyoFont';
+        src: url(data:font/woff2;base64,{encoded}) format('woff2');
+        font-weight: normal;
+        font-style: normal;
+    }}
+
+    html, body, [class*="css"] {{
+        font-family: 'MyoFont', sans-serif !important;
+    }}
+    </style>
+    """
+
+    st.markdown(font_css, unsafe_allow_html=True)
+
+# -------------------------------
+# 3) 실행
+# -------------------------------
+load_custom_font()
+
+
 import streamlit as st
 import pandas as pd
 from datetime import date
