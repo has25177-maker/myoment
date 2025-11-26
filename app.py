@@ -102,8 +102,6 @@ span[aria-hidden="true"] > svg {
     height: 0 !important;
     overflow: hidden !important;
 }
-
-}}
 </style>
 """
 
