@@ -5,16 +5,6 @@ import pandas as pd
 from datetime import date
 import requests
 
-<style>
-/* 사이드바 토글 버튼( > , < ) 완전히 숨기기 */
-button[kind="header"] {
-    display: none !important;
-}
-
-/* 아이콘 자체도 숨기기 (keyboard_double_arrow_right 방지) */
-svg[data-testid="stActionButtonIcon"] {
-    display: none !important;
-}
 </style>
 
 # ======================================
