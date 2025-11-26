@@ -1,46 +1,38 @@
-import os
 import streamlit as st
+import base64
+import os
 
 # -------------------------------
-# 1) 폰트 파일 절대경로 안전 생성
+#  폰트 base64 인코딩
 # -------------------------------
-FONT_PATH = os.path.join(os.path.dirname(__file__), "BakDahyun.woff2")
+def load_font_base64(font_path):
+    with open(font_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
-# -------------------------------
-# 2) 커스텀 폰트 로딩
-# -------------------------------
-def load_custom_font():
-    if not os.path.exists(FONT_PATH):
-        st.write("⚠ 폰트 파일을 찾을 수 없습니다:", FONT_PATH)
-        return
-
-    # woff2는 base64 인코딩해야 CSS에서 사용 가능
-    import base64
-    with open(FONT_PATH, "rb") as f:
-        font_bytes = f.read()
-        encoded = base64.b64encode(font_bytes).decode()
-
-    font_css = f"""
-    <style>
-    @font-face {{
-        font-family: 'MyoFont';
-        src: url(data:font/woff2;base64,{encoded}) format('woff2');
-        font-weight: normal;
-        font-style: normal;
-    }}
-
-    html, body, [class*="css"] {{
-        font-family: 'MyoFont', sans-serif !important;
-    }}
-    </style>
-    """
-
-    st.markdown(font_css, unsafe_allow_html=True)
+FONT_PATH = os.path.join(os.path.dirname(__file__), "Ownglyph_PDH-Rg.woff2")
+font_base64 = load_font_base64(FONT_PATH)
 
 # -------------------------------
-# 3) 실행
+#  기본 스타일
 # -------------------------------
-load_custom_font()
+CUSTOM_STYLE = f"""
+<style>
+
+@font-face {{
+    font-family: 'MyoFont';
+    src: url(data:font/woff2;base64,{font_base64}) format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}}
+
+html, body, [class*="css"] {{
+    font-family: 'MyoFont', sans-serif !important;
+}}
+
+</style>
+"""
+
+st.markdown(CUSTOM_STYLE, unsafe_allow_html=True)
 
 
 import streamlit as st
