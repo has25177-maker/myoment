@@ -38,19 +38,16 @@ button, .stButton > button {{
     font-family: 'MyoFont', sans-serif !important;
 }}
 
-/* 전체 배경 */
 body, .main, [data-testid="stAppViewContainer"],
 [data-testid="stAppViewContainer"] > .main,
 .block-container {{
     background-color: #FEF7EB !important;
 }}
 
-/* 사이드바 */
 [data-testid="stSidebar"] {{
     background-color: #F3E8DD !important;
 }}
 
-/* 텍스트 색상 */
 h1, h2, h3, h4, h5 {{
     color: #4A332D !important;
 }}
@@ -58,7 +55,6 @@ p, span, label {{
     color: #4A332D !important;
 }}
 
-/* 버튼 */
 .stButton > button {{
     background-color: #E6B59D !important;
     color: #4A332D !important;
@@ -70,38 +66,36 @@ p, span, label {{
     background-color: #d8c4b6 !important;
 }}
 
-/* 입력창 */
 input, textarea {{
     background-color: #FEF7EB !important;
     color: #4A332D !important;
     border-radius: 8px !important;
 }}
+
 div[data-baseweb="select"] > div {{
     background-color: #FEF7EB !important;
     border-radius: 8px !important;
 }}
 
-/* 라디오/체크박스 */
 input[type="radio"], input[type="checkbox"] {{
     accent-color: #E6B59D !important;
 }}
 
-/* 스크롤 바 */
 ::-webkit-scrollbar-thumb {{
     background-color: #E6B59D !important;
     border-radius: 10px;
 }}
 
-/* Streamlit 자동 아이콘(→, ▼ 등) 완전 제거 */
 button svg, 
 svg[data-testid="stActionButtonIcon"],
-span[aria-hidden="true"] > svg {
+span[aria-hidden="true"] > svg {{
     display: none !important;
     visibility: hidden !important;
     width: 0 !important;
     height: 0 !important;
     overflow: hidden !important;
-}
+}}
+
 </style>
 """
 
