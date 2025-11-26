@@ -465,8 +465,9 @@ elif menu == "AI 진단":
 elif menu == "집사 가이드":
     page_guide()
 elif menu == "응급상황 AI":
-    page_ai_emergency()
+    page_osm_map()
 elif menu == "음식 사전":
     page_food_dict()
 elif menu == "마켓":
     page_market()
+
