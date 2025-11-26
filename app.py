@@ -1,50 +1,6 @@
 import streamlit as st
 import base64
 import os
-
-def load_font_base64(font_path):
-    with open(font_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-FONT_PATH = os.path.join(os.path.dirname(__file__), "Ownglyph_PDH-Rg.woff2")
-font_base64 = load_font_base64(FONT_PATH)
-
-CUSTOM_STYLE = f"""
-<style>
-
-@font-face {{
-    font-family: 'MyoFont';
-    src: url(data:font/woff2;base64,{font_base64}) format('woff2');
-    font-weight: normal;
-    font-style: normal;
-}}
-
-/* -------------------------------
-   Streamlit 전체 자동 스타일 적용
--------------------------------- */
-
-html, body, [class^="st-"], [class*=" st-"], div, span, label, p, h1, h2, h3, h4, h5, h6 {{
-    font-family: 'MyoFont', sans-serif !important;
-}}
-
-/* 입력창 내부 placeholder까지 적용 */
-input, textarea, select {{
-    font-family: 'MyoFont', sans-serif !important;
-}}
-
-button, .stButton > button {{
-    font-family: 'MyoFont', sans-serif !important;
-}}
-
-</style>
-"""
-
-st.markdown(CUSTOM_STYLE, unsafe_allow_html=True)
-
-
-import streamlit as st
-import base64
-import os
 import pandas as pd
 from datetime import date
 import requests
