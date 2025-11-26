@@ -92,9 +92,17 @@ input[type="radio"], input[type="checkbox"] {{
     border-radius: 10px;
 }}
 
-/* keyboard_double_arrow_right 아이콘 제거 */
-svg[data-testid="stActionButtonIcon"] {{
+/* Streamlit 자동 아이콘(→, ▼ 등) 완전 제거 */
+button svg, 
+svg[data-testid="stActionButtonIcon"],
+span[aria-hidden="true"] > svg {
     display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
 }}
 </style>
 """
@@ -330,6 +338,34 @@ def page_osm_map():
         st.subheader("📋 병원 목록")
         st.dataframe(df, use_container_width=True)
 
+st.subheader("⚠️ 응급 상황별 가이드")
+
+    mode = st.selectbox(
+        "상황 선택",
+        ["선택", "건강 응급", "심폐소생술", "화재/지진", "고양이 실종"]
+    )
+
+    if mode == "건강 응급":
+        st.write("- 반복 구토: 사료/물 잠시 치우고 기록")
+        st.write("- 호흡 곤란: 즉시 병원 이동")
+        st.write("- 의식 저하: 바로 응급 진료")
+
+    elif mode == "심폐소생술":
+        st.write("- 의식 확인 → 호흡·맥박 없으면 즉시 흉부 압박")
+        st.write("- 100~120회/분 속도, 1/3 흉곽 깊이로 압박")
+        st.write("- 30회 압박 후 2회 인공호흡 반복")
+
+    elif mode == "화재/지진":
+        st.write("- 이동장 바로 사용하도록 평소 훈련")
+        st.write("- 큰 소리·진동 → 숨을 수 있는 공간 확보")
+        st.write("- 화재 연기 흡입 시 즉시 병원 이동")
+
+    elif mode == "고양이 실종":
+        st.write("- 50m 반경 조용히 탐색")
+        st.write("- 집 주변 숨기 좋은 공간 집중 확인")
+        st.write("- 낯선 사람이 찾지 말고 집사가 직접 탐색")
+        st.write("- 먹이/모래/담요 이용해 유도 가능")
+
 
 # ======================================
 # 6. 집사 가이드
@@ -443,6 +479,42 @@ def page_market():
 
     st.subheader(f"현재 상태: {state}")
     st.write("- 맞춤형 사료 추천 예시")
+        # -----------------------------------------------------------
+    # 상태별 추천 사료 리스트 (간단 예시)
+    # -----------------------------------------------------------
+    recommendations = {
+        "장 건강 민감": [
+            "✨ 로얄캐닌 센서티브 Digestion",
+            "✨ 퓨리나 프로플랜 센서티브",
+            "✨ ANF 인도어 솔루션 장 건강"
+        ],
+        "수분 부족": [
+            "💧 북어국물 동결건조 토핑",
+            "💧 뉴트리플랜 수분파우치",
+            "💧 캣잇 플로우 동결건조 수분토핑"
+        ],
+        "식욕 저하": [
+            "🍽️ 챠오 츄르(보조용)",
+            "🍽️ 인스팅트 오리지날 캔",
+            "🍽️ K9 내추럴 치킨&램 캔"
+        ],
+        "전반적으로 양호": [
+            "🌿 오리젠 오리지날",
+            "🌿 아카나 그라스랜드",
+            "🌿 몬지 인도어 어덜트"
+        ],
+        "정보 부족": [
+            "✔️ 몬지 데일리 캣",
+            "✔️ 뉴트리소스 캣푸드",
+            "✔️ 퓨리나 원 인도어"
+        ]
+    }
+
+    st.markdown("### 추천 사료")
+
+    for item in recommendations[state]:
+        st.write(f"- {item}")
+
 
 
 # ======================================
@@ -465,7 +537,7 @@ elif menu == "AI 진단":
 elif menu == "집사 가이드":
     page_guide()
 elif menu == "응급상황 AI":
-    page_osm_map()
+    page_ai_emergency()
 elif menu == "음식 사전":
     page_food_dict()
 elif menu == "마켓":
