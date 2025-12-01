@@ -91,9 +91,9 @@ button svg,
 [data-testid="stSidebarContent"] svg,
 .css-1647f2h svg,
 .css-1cpxbza svg,
-.css-1r6r8x4 svg {
-    display: none !important;
-}
+.css-1r6r8x4 svg {{  
+     display: none !important;
+ }}               
 
 </style>
 """
