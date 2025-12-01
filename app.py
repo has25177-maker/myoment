@@ -86,15 +86,7 @@ input[type="radio"], input[type="checkbox"] {{
     border-radius: 10px;
 }}
 
-#button svg, 
-#svg[data-testid="stActionButtonIcon"],
-#span[aria-hidden="true"] > svg {{
-#    display: none !important;
-#    visibility: hidden !important;
-#    width: 0 !important;
-#    height: 0 !important;
-#    overflow: hidden !important;
-}}
+button svg, 
 
 </style>
 """
