@@ -86,8 +86,7 @@ input[type="radio"], input[type="checkbox"] {{
     border-radius: 10px;
 }}
 
-button svg, 
-
+button svg,
 [data-testid="baseButton-headerNoPadding"] svg,
 [data-testid="stSidebarContent"] svg,
 .css-1647f2h svg,
