@@ -84,16 +84,7 @@ input[type="radio"], input[type="checkbox"] {{
 ::-webkit-scrollbar-thumb {{
     background-color: #E6B59D !important;
     border-radius: 10px;
-}}
-
-button svg,
-[data-testid="baseButton-headerNoPadding"] svg,
-[data-testid="stSidebarContent"] svg,
-.css-1647f2h svg,
-.css-1cpxbza svg,
-.css-1r6r8x4 svg {{  
-     display: none !important;
- }}               
+}}  
 
 </style>
 """
@@ -433,7 +424,7 @@ def page_food_dict():
 
     col1, col2 = st.columns([3,1])
     with col1:
-        query = st.text_input("음식 이름 입력", key="food_query")
+        query = st.text_input("음식 이름 입력", key="food_query", label_visibility="collapsed")
     with col2:
         search = st.button("검색")
 
