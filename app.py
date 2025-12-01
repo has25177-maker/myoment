@@ -59,36 +59,65 @@ p, span, label {{
     color: #4A332D !important;
 }}
 
-.stButton > button {{
+button, .stButton > button {
+    font-family: 'MyoFont', sans-serif !important;
+}
+
+body, .main, [data-testid="stAppViewContainer"],
+[data-testid="stAppViewContainer"] > .main,
+.block-container {
+    background-color: #FEF7EB !important;
+}
+
+[data-testid="stSidebar"] {
+    background-color: #F3E8DD !important;
+}
+
+h1, h2, h3, h4, h5 {
+    color: #4A332D !important;
+}
+p, span, label {
+    color: #4A332D !important;
+}
+
+.stButton > button {
     background-color: #E6B59D !important;
     color: #4A332D !important;
     border-radius: 10px;
     border: none;
     padding: 0.5rem 1.2rem;
-}}
-.stButton > button:hover {{
+}
+.stButton > button:hover {
     background-color: #d8c4b6 !important;
-}}
+}
 
-input, textarea {{
+input, textarea {
     background-color: #FEF7EB !important;
     color: #4A332D !important;
     border-radius: 8px !important;
-}}
+}
 
-div[data-baseweb="select"] > div {{
+div[data-baseweb="select"] > div {
     background-color: #FEF7EB !important;
     border-radius: 8px !important;
-}}
+}
 
-input[type="radio"], input[type="checkbox"] {{
+input[type="radio"], input[type="checkbox"] {
     accent-color: #E6B59D !important;
-}}
+}
 
-::-webkit-scrollbar-thumb {{
+::-webkit-scrollbar-thumb {
     background-color: #E6B59D !important;
     border-radius: 10px;
-}}  
+}
+
+/* 겹치는 텍스트(오류)를 숨기기 위한 최종 코드: 중괄호 2개 사용 */
+.stTextInput > div:nth-child(2) > div:nth-child(2) {{
+    display: none !important;
+}}
+
+/* 아이콘 숨김으로 인해 오류가 발생했던 코드를 제거하고, 꼭 필요한 부분만 남겼습니다. */
+/* 다른 아이콘들은 기본 Streamlit 아이콘으로 노출될 수 있습니다. */
 
 </style>
 """
