@@ -36,7 +36,11 @@ input, textarea, select {{
 
 button, .stButton > button {{
     font-family: 'MyoFont', sans-serif !important;
+    .stTextInput > div:nth-child(2) > div:nth-child(2) {{
+    display: none !important;
 }}
+
+}
 
 body, .main, [data-testid="stAppViewContainer"],
 [data-testid="stAppViewContainer"] > .main,
